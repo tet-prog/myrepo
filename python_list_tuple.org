@@ -1,0 +1,958 @@
+#+title: 【Python入門】リストとタプルの基本と使い分けをやさしく解説
+#+options: ^:nil toc:nil num:nil
+#+startup: showall
+
+プログラムでは、「複数のデータをまとめて扱いたい」という場面がたくさんあります。曜日の一覧、テストの点数、座標の(x, y)……。そんなときに使うのが *リスト（list）* と *タプル（tuple）* です。
+
+どちらも「要素を順番に並べて管理する」データ構造ですが、*あとから中身を変更できるかどうか* という大きな違いがあります。この記事では、それぞれの作り方・基本操作から、よく使うメソッド、リスト内包表記、使い分けのポイントまでをまとめて解説します。
+
+--------------
+
+* この記事でわかること
+- リストとタプルの違い（ミュータブル／イミュータブル）
+- タプルの作り方と、1要素タプルの落とし穴
+- タプルのアンパックと値の交換
+- リストの作成・取り出し・スライス
+- 要素の追加・削除・検索・並べ替え
+- ~=~ による代入と =copy()= の違い
+- リスト内包表記
+- リストとタプルの使い分け
+
+--------------
+
+* 1. リストとタプルの違い
+Pythonには、文字列のほかに *リスト* と *タプル* という2種類のシーケンス（順番に並んだデータ）があります。文字列と違い、要素にはどんな型のオブジェクトでも入れられます。
+
+|                  | リスト                   | タプル                       |
+|------------------+--------------------------+------------------------------|
+| 書き方           | =[1, 2, 3]=              | =(1, 2, 3)=                  |
+| 変更             | *できる*（ミュータブル） | *できない*（イミュータブル） |
+| 辞書のキーに使う | 使えない                 | 使える                       |
+
+アンパック
+
+--------------
+
+* 3. リスト：変更できるシーケンス
+リスト（list） は、順序付けられた複数のデータ（要素という）を保持するデータ型である。リストの特商は次のとおりである。
+
+- データは順序付けられている つまり要素の並び順にに意味があるということである。リストは先頭から順に並んでいるので、インデックスで参照することができる。
+- 要素はどのようなデータ型でも良い リストの要素は1つのデータ型に制限されるようなことはない。1つのリストに文字列型、数値型、その他の型などを混ぜて保持することができる。
+- 要素の重複を許容 要素が重複していても良い。要素の重複を許容しないコンテナもある。
+- ミュータブルである リストの要素を、作成した後に追加・削除することができるのでミュータブルだ。
+
+曜日の一覧、テストの点数、買い物メモなど「いくつかの値をまとめて持っておきたい」という場面で使う。
+
+リストは、要素の順番を管理したいとき、*特に順序や内容が変わる可能性があるとき* に向いています。要素の追加・削除・置き換えが自由にでき、同じ値が何回登場してもかまいません。
+
+** listのリテラル表記
+リテラル表記でリストオブジェクトを作成するには角括弧を使う。0個以上の要素をカンマで区切って、全体を角括弧で括る。要素はどのようなデータ型でも構わない。
+
+#+begin_src python
+>>> empty_list = []
+>>> weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+>>> mixed = [2026, 'Python', 3.14, True]   # 型が混ざってもOK
+#+end_src
+
+
+** リストへの変換
+list()を使うとイテラブルなオブジェクト（str、tuple、range、set、dict など）をリストに変換できる。
+
+#+begin_src python
+>>> list()
+[]
+>>> list('cat')                       # 文字列 → 1文字ずつのリスト
+['c', 'a', 't']
+>>> list(('ready', 'fire', 'aim'))    # タプル → リスト
+['ready', 'fire', 'aim']
+#+end_src
+
+* 4. インデックス参照
+リストはインデックスを使って要素を参照することができる。それには、リストの後に角括弧で囲んでインデックス番号を指定する。インデックスは0から始まり先頭から順に0、1、2、…と順に整数で指定する。負のインデックスを使うと末尾からの位置を指定できる。最後の要素のインデックスは-1になる。
+
+#+begin_src python
+>>> weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+>>> weekdays[0]
+'Mon'
+>>> weekdays[2]
+'Wed'
+>>> weekdays[-1]        # 末尾の要素
+'Fri'
+#+end_src
+
+範囲外のインデックスを指定すると例外が送出される。
+
+#+begin_src python
+>>> weekdays[5]
+Traceback (most recent call last):
+  ...
+IndexError: list index out of range
+#+end_src
+
+インデックスで参照した要素に値を代入すると、参照した要素を置き換えることができる。
+
+#+begin_src python
+>>> weekdays[4] = 'Holiday'
+>>> weekdays
+['Mon', 'Tue', 'Wed', 'Thu', 'Holiday']
+#+end_src
+
+* 要素の追加・挿入：append()・insert()
+リストの末尾に要素を追加するには、リストオブジェクトのappend()メソッドを使う。
+
+#+begin_src python
+>>> fruits = ['apple', 'banana']
+>>> fruits.append('cherry')          # 末尾に1つ追加
+>>> fruits
+['apple', 'banana', 'cherry']
+#+end_src
+
+リストの途中に要素を挿入するにはにinsert()メソッドを使う。第1引数に挿入したい位置のインデックスを、第2引数に値を指定する。先頭に挿入したい場合はインデックスに0を指定する。もちろん、インデックスに負の値を指定することもできる。
+
+#+begin_src python
+>>> fruits.insert(1, 'orange')       # インデックス1の位置に挿入
+>>> fruits
+['apple', 'orange', 'banana', 'cherry']
+>>> fruits.insert(0, 'grape')        # 先頭に挿入
+>>> fruits
+['grape', 'apple', 'orange', 'banana', 'cherry']
+#+end_src
+
+インデックス参照と異なり、append()もinsert()も範囲外のインデックスを指定しても例外が送出されることはない。末尾のインデックスより大きい値を指定した場合は、末尾に追加される。
+
+append()メソッドが要素を1つずつしか追加できないのに対し、extend()メソッドは別のリストの要素をまとめて追加できる。extend() は引数に渡されたリストの要素を1つずつ末尾に加える。
+
+#+begin_src python
+>>> fruits.extend(['melon', 'peach'])   # 別のリストの要素をまとめて追加
+>>> fruits
+['grape', 'apple', 'orange', 'banana', 'cherry', 'melon', 'peach']
+#+end_src
+
+extend()メソッドの引数に渡すのはリストだけに限られない。リテラブルなオブジェクトならなんでも良い。
+
+** +による結合
++を使うと2つのリストを結合した、新しいリストオブジェクトを作成できる。新しいリストは、第1オペランドの要素の後ろに第2オペランドの要素が続く。
+
+extend()メソッドと同じように、既存のリスト後ろに、別のリストの要素をまとめて追加したいなら~+=~使えばいい。これはextend()メソッド同様、右辺はリテラブルなオブジェクトならなんでも良い。extend()と~+=~のどちらを使うかは好みの問題だ。
+
+* 要素の削除：del・remove()・pop()・clear()
+** インデックス位置の要素を削除
+特定の位置の要素削除するには、delに続けてインデックス参照と同じように指定する。
+
+** 要素の値で削除する
+値を指定して、リストのどこかにある要素を削除するにはremove()メソッドを使う。remove()メソッドは、リストの中で指定した値と最初に一致する要素を削除する。削除する要素が見つからなった場合は、ValueError例外が送出される。
+
+** すべての要素を削除する
+リストのすべての要素を削除するにはclear()メソッドを使う。
+
+| 方法            | 指定するもの             | 戻り値         |
+|-----------------+--------------------------+----------------|
+| =del リスト[i]= | 位置                     | なし（文）     |
+| =remove(値)=    | 値（最初に一致したもの） | なし           |
+| =pop(i)=        | 位置（省略時は末尾）     | 取り出した要素 |
+| =clear()=       | ―                        | なし（全削除） |
+
+#+begin_src python
+>>> nums = [10, 20, 30, 20, 40]
+>>> del nums[0]
+>>> nums
+[20, 30, 20, 40]
+>>> nums.remove(20)      # 最初の20だけ削除
+>>> nums
+[30, 20, 40]
+>>> nums.pop()           # 末尾を取り出す
+40
+>>> nums.pop(0)          # 先頭を取り出す
+30
+>>> nums
+[20]
+>>> nums.clear()
+>>> nums
+[]
+#+end_src
+
+* リストの長さ：len()
+#+begin_src python
+>>> fruits = ['apple', 'banana', 'cherry', 'banana']
+>>> len(fruits)             # 要素数
+4
+#+end_src
+
+* 要素をソートする
+リストの要素をソートするには次の2つが使える。
+
+|            | =リスト.sort()=  | =sorted(リスト)=          |
+|------------+------------------+---------------------------|
+| 元のリスト | *並べ替えられる* | 変わらない                |
+| 戻り値     | =None=           | 並べ替えた *新しいリスト* |
+
+リストのsort()メソッドを使うと、リストオブジェクトをその場（インプレース）でソートする。
+
+デフォルトでは昇順にソートする。降順にソートするにはreverse引数にTrueを指定する。
+
+#+begin_src python
+>>> nums = [10, 20, 30, 20, 40]
+>>> nums.sort()                  # 昇順（デフォルト）
+>>> nums
+[10, 20, 20, 30, 40]
+>>> nums.sort(reverse=True)      # 降順
+>>> nums
+[40, 30, 20, 20, 10]
+#+end_src
+
+組み込みのsorted()関数を使うと、ソートした新しいリストが返される。降順にソートするにはreverse引数にTrueを指定するのは、リストのsort()メソッド同様だ。
+
+文字列のリストの場合は、辞書順でソートされる。
+
+#+begin_src python
+>>> sorted(['banana', 'apple', 'cherry'])
+['apple', 'banana', 'cherry']
+>>> sorted(['banana', 'apple', 'cherry'], reverse=True)
+['cherry', 'banana', 'apple']
+#+end_src
+
+* 要素を逆順にする
+
+要素を逆順に並べ替えるには主に3つの方法がある。
+
+| 方法             | 元のリスト   | 戻り値       |
+|------------------+--------------+--------------|
+| =nums[::-1]=     | 変わらない   | 新しいリスト |
+| =reversed(nums)= | 変わらない   | イテレータ   |
+| =nums.reverse()= | *逆順になる* | =None=       |
+
+1. スライス
+
+#+begin_src python
+>>> nums = [0, 10, 20, 30]
+>>> nums[::-1]
+[30, 20, 10, 0]
+>>> nums
+[0, 10, 20, 30]        # 元は変わらない
+#+end_src
+
+2. reversed()
+
+組み込み関数で、逆順に取り出すイテレータを返す。リストが欲しいときは list() で変換する。
+
+#+begin_src python
+>>> list(reversed(nums))
+[30, 20, 10, 0]
+>>> type(reversed(nums))
+<class 'list_reverseiterator'>
+#+end_src
+
+for で逆順に回すだけなら、変換せずにそのまま使う。新しいリストを作らないので、要素数が多いときはメモリを節約できる。
+
+#+begin_src python
+>>> for x in reversed(nums):
+...     print(x)
+#+end_src
+
+3. reverse() メソッド
+
+元のリストをその場（インプレース）で逆順にする。sort() と同じ性質で、戻り値は None だ。
+
+#+begin_src python
+>>> nums.reverse()
+>>> nums
+[30, 20, 10, 0]
+>>> nums = nums.reverse()      # よくある間違い
+>>> nums
+None
+#+end_src
+
+使い分け
+
+- 元のリストを残したい → nums[::-1]
+- for で逆順に処理するだけ → reversed(nums)
+- 元のリストを逆順にしたい → nums.reverse()
+
+* 検索と集計：index()・count()・len()
+#+begin_src python
+>>> fruits = ['apple', 'banana', 'cherry', 'banana']
+>>> 'banana' in fruits      # 含まれているか
+True
+>>> fruits.index('banana')  # 最初に出てくる位置
+1
+>>> fruits.count('banana')  # 出現回数
+2
+>>> len(fruits)             # 要素数
+4
+#+end_src
+
+=in=、=index()=、=count()=、=len()= はタプルでも使えます。
+
+* index()による要素の位置の取得
+
+リストの中で、ある値の位置を調べるには index() メソッドを使う。index()は、引数に指定した値がリスト内で最初に見つかった位置のインデックスを返す。
+
+#+begin_src python
+>>> fruits = ['apple', 'banana', 'cherry', 'banana']
+>>> fruits.index('banana')
+1
+#+end_src
+
+'banana' は1番目と3番目にあるが、返るのは 最初に見つかった位置 だけだ。
+
+探している値がリストにないとき、index() はValueError例外を送出する。
+
+#+begin_src python
+>>> fruits.index('melon')
+Traceback (most recent call last):
+  ...
+ValueError: 'melon' is not in list
+#+end_src
+
+そのため、値があるかどうかわからないときは、先に in で確認する。
+
+#+begin_src python
+>>> if 'melon' in fruits:
+...     print(fruits.index('melon'))
+... else:
+...     print('見つからなかった')
+...
+見つからなかった
+#+end_src
+
+try で例外を受ける書き方もできる。Pythonでは、先に確認するのではなく、やってみて失敗したら例外を捕まえるという書き方もよく使われる。詳しくは例外処理の記事で扱う。
+
+#+begin_src python
+>>> try:
+...     position = fruits.index('melon')
+... except ValueError:
+...     position = None
+...
+>>> print(position)
+None
+#+end_src
+
+** 探す範囲を指定する
+
+index() には、探す範囲を絞る引数を2つ渡せる。リスト.index(値, start, stop) と書くと、スライスと同じ考え方で範囲が決まる。stop の位置は含まれない。
+
+#+begin_src python
+>>> fruits.index('banana', 2)      # インデックス2以降を探す
+3
+>>> fruits.index('banana', 0, 2)   # インデックス0から1までを探す
+1
+#+end_src
+
+** 2つ目以降の位置を調べる
+
+start の指定を使えば、同じ値が複数あるときに次の位置を探せる。見つかった位置に1を足して、それを次の start にする。
+
+#+begin_src python
+>>> first = fruits.index('banana')
+>>> first
+1
+>>> fruits.index('banana', first + 1)
+3
+#+end_src
+
+すべての位置をまとめて知りたいときは、index() を繰り返すよりも、enumerate() とリスト内包表記を使うほうが簡単だ。
+
+#+begin_src python
+>>> [i for i, value in enumerate(fruits) if value == 'banana']
+[1, 3]
+#+end_src
+
+* count()による要素の個数の取得
+
+リストの中に、ある値がいくつ含まれているかを数えるには count() メソッドを使う。count() メソッドは引数に渡された値が、リストの中で出現する回数を返す。見つからないときは0が返る
+
+#+begin_src python
+>>> fruits = ['apple', 'banana', 'cherry', 'banana']
+>>> fruits.count('banana')
+2
+>>> fruits.count('apple')
+1
+#+end_src
+
+index() には探す範囲を指定する引数があったが、count() にはない。範囲を限定して数えたいときは、先にスライスで切り出す。
+
+#+begin_src python
+>>> fruits[2:].count('banana')
+1
+#+end_src
+
+注意：Pythonでは 1 == True と 1 == 1.0 が成り立つため、型が違っても同じ値として数えられてしまう。
+
+#+begin_src python
+>>> [1, True, 1.0].count(1)
+3
+#+end_src
+
+数値とブール値が混ざったリストを数えるときは、意図した結果になっているか確認したい。
+
+** 重複があるかを調べる
+
+「重複した要素があるか」を知りたいだけなら、count() を繰り返すより、集合に変換して要素数を比べるほうが簡単で速い。
+
+#+begin_src python
+>>> nums = [3, 1, 3, 3, 2]
+>>> len(set(nums)) != len(nums)
+True
+#+end_src
+
+集合は重複を持たないので、変換して要素数が減れば重複があったということになる。
+
+** すべての値の個数をまとめて数える
+
+値ごとの個数を一度に知りたいときは、count() を値の数だけ呼ぶのではなく、collections モジュールの Counter を使う。
+
+#+begin_src python
+>>> from collections import Counter
+>>> Counter(fruits)
+Counter({'banana': 2, 'apple': 1, 'cherry': 1})
+>>> Counter(fruits).most_common(1)     # 最も多い値
+[('banana', 2)]
+#+end_src
+
+count() は呼ぶたびにリストを先頭から走査するので、値の種類が多いと効率が悪い。Counter はリストを1回たどるだけで全部の個数を数えてくれる。
+
+* inによる要素の存在確認
+
+ある値がリストに含まれているかどうかを調べるには =in= 演算子を使う。=値 in リスト= と書き、含まれていれば =True=、含まれていなければ =False= が返る。
+
+#+begin_src python
+>>> fruits = ['apple', 'banana', 'cherry']
+>>> 'banana' in fruits
+True
+>>> 'melon' in fruits
+False
+#+end_src
+
+逆に「含まれていないこと」を確かめたいときは =not in= を使う。
+
+#+begin_src python
+>>> 'melon' not in fruits
+True
+#+end_src
+
+=in= の結果はブール値なので、そのまま =if= 文の条件に書ける。リストを使うときの定番の書き方だ。
+
+#+begin_src python
+>>> if 'apple' in fruits:
+...     print('りんごがある')
+...
+りんごがある
+#+end_src
+
+判定は値が等しいかどうか（~==~）で行われる。同じオブジェクトであるかどうかは見ないので、中身が等しいリストでも =True= になる。
+
+#+begin_src python
+>>> [1, 2] in [[1, 2], [3, 4]]
+True
+#+end_src
+
+=in= はリスト以外のシーケンスでも使える。タプルでも書き方は同じで、文字列の場合は「部分文字列が含まれるか」の判定になる。辞書に対してはキーを調べる。
+
+#+begin_src python
+>>> 2 in (1, 2, 3)        # タプル
+True
+>>> 'an' in 'banana'      # 文字列は部分文字列を探す
+True
+#+end_src
+
+#+begin_quote
+*ポイント*：リストの =in= は先頭から順に要素を比べていくので、要素数が多いほど時間がかかる。存在確認を何度も繰り返す処理では、集合（set）を使うほうが速い。集合については別の記事で扱う。
+
+#+end_quote
+
+* スライスで一部を取り出す
+
+スライスを使うと、リストから一部の要素を取り出すことができる。スライスは、取り出した要素を含む新しいリストオブジェクトを返す。ただし、スライスは浅いコピーなので要素が共有されたままなので注意が必要である。
+
+スライスはリストに続けて=[start:end:step]= の形で範囲を指定します。
+
+#+begin_src python
+list_obj[start:end:step]
+#+end_src
+
+=start=に開始位置のインデックス、=end=に終了位置のインデックス＋1、=step=には間隔を指定する。=end=の位置の文字は含まれないことに注意しよう。
+
+=start=・=end=・=step=はそれぞれ省略することができる。=step=を省略するときは、その前のコロンも省略できる。
+
+まずはstepを使わない（省略した）、次の規則を理解しよう。
+
+- =[start:end]=は=start=から=end-1=までの要素を抽出
+- =[start:]=は=start=から末尾までの要素を抽出
+- =[:end]=は先頭から=end-1=までの要素を抽出
+- =[:]=は先頭から末尾までの要素を抽出
+
+それでは次のリストでスライスの使い方を見ていこう。
+
+#+begin_src python
+>>> nums = [0, 10, 20, 30, 40, 50]
+#+end_src
+
+[start:end]：start から end-1 までの要素を抽出
+
+#+begin_src python
+>>> nums[1:4]          # インデックス1、2、3の要素
+[10, 20, 30]
+>>> nums[0:2]          # インデックス0、1の要素
+[0, 10]
+#+end_src
+
+[start:]：start から末尾までの要素を抽出
+
+#+begin_src python
+>>> nums[2:]
+[20, 30, 40, 50]
+#+end_src
+
+[:end]：先頭から end-1 までの要素を抽出
+
+#+begin_src python
+>>> nums[:3]
+[0, 10, 20]
+#+end_src
+
+[:]：先頭から末尾までの要素を抽出
+
+#+begin_src python
+>>> nums[:]
+[0, 10, 20, 30, 40, 50]
+#+end_src
+
+負のインデックスも使える。負のインデックスは末尾からの位置を表し、末尾の要素が -1 になる。
+
+#+begin_src python
+>>> nums[-3:]          # 末尾の3つ
+[30, 40, 50]
+>>> nums[:-2]          # 末尾の2つを除いたもの
+[0, 10, 20, 30]
+>>> nums[-4:-1]        # 末尾から4つ目から、末尾の1つ前まで
+[20, 30, 40]
+>>> nums[1:-1]         # 先頭と末尾を除いたもの
+[10, 20, 30, 40]
+#+end_src
+
+スライスは、インデックス参照と異なり範囲外のインデックスを指定してもエラーにならない。
+
+#+begin_src python
+>>> nums[2:100]        # 範囲を超えて指定してもエラーにならない
+[20, 30, 40, 50]
+>>> nums[3:3]          # startとendが同じなら空のリスト
+[]
+>>> nums[4:2]          # startがendより大きいときも空のリスト
+[]
+#+end_src
+
+インデックス参照（nums[100]）は IndexError になるのに対し、スライスは範囲外でもエラーにならない。
+
+step を指定すると、要素を1つずつではなく、指定した間隔で取り出せる。
+
+#+begin_src python
+>>> nums = [0, 10, 20, 30, 40, 50]
+>>> nums[::2]          # 先頭から末尾まで、1つおき
+[0, 20, 40]
+>>> nums[1:5:2]        # インデックス1から4まで、1つおき
+[10, 30]
+#+end_src
+
+step に負の値を指定すると、末尾から先頭に向かって取り出す。
+
+#+begin_src python
+>>> nums[::-1]         # 逆順
+[50, 40, 30, 20, 10, 0]
+>>> nums[::-2]         # 逆順で1つおき
+[50, 30, 10]
+#+end_src
+
+nums[::-1] は、リストを逆順にしたコピーを作る定番の書き方だ。
+
+注意：step が負のときは、start と end の意味する向きも逆になる。start のほうが後ろの位置、end のほうが前の位置になる。
+
+#+begin_src python
+>>> nums[4:1:-1]      # インデックス4から2まで、後ろから前へ
+[40, 30, 20]
+#+end_src
+
+** スライスによる要素の書き換え
+インデックス参照した要素に値を代入できるのと同様、スライスで参照した要素にも値を代入することができる。
+
+スライスした結果は、新しいリストを返すので、そのリストを変更しても元のリストには影響を与えない。
+
+* リストのリスト
+どんなオブジェクトでもリストの要素にすることができるので、リストの要素にリストを入れることももちろんできます。
+
+#+begin_src python
+>>> scores = [[80, 95], [70, 60], [100, 85]]
+>>> scores[1]            # 内側の2番目のリスト
+[70, 60]
+#+end_src
+
+内側の要素を参照するにはインデックスを2つ重ねて取り出します。
+
+#+begin_src python
+>>> scores[1][0]         # そのリストの先頭の要素
+70
+>>> scores[-1][-1]       # 最後のリストの、最後の要素
+85
+#+end_src
+
+内側の要素を書き換えるときも、インデックスを2つ重ねて指定する。
+
+#+begin_src python
+>>> scores[0][1] = 90
+>>> scores
+[[80, 90], [70, 60], [100, 85]]
+#+end_src
+
+* 要素のコピー
+
+同じ要素を持つ新しいリストオブジェクト、つまりリストのコピーを作成するにはいくつか方法がある。これらのコピーはいずれも*浅いコピー* である。
+
+a.copy() リストのcopy()メソッドを使う
+list(a) list()を使う
+a[:] スライスを使う
+copy.copy(a) copyモジュールのcopy関数を使う
+
+#+begin_src python
+>>> a = [1, 2, 3]
+>>> b = a.copy()
+>>> c = list(a)
+>>> d = a[:]
+#+end_src
+
+リストはそれぞれ独立しているので、要素を置き換えてもコピーのリストは影響を受けない。
+
+#+begin_src python
+>>> a[0] = 'changed'
+>>> b, c, d
+([1, 2, 3], [1, 2, 3], [1, 2, 3])
+#+end_src
+
+しかし、浅いコピーなので、要素自体を変更すると他のリストも影響を受ける。
+
+** 浅いコピー
+
+先ほど説明した方法はいずれも浅いコピーという話をした。これを理解するために次の例を使う。
+
+#+begin_src python
+>>> x = [1, [8, 9]]
+>>> y = x
+>>> z = x.copy()
+#+end_src
+
+x はリストオブジェクトを参照している。x という名前が、そのリストオブジェクトに結び付けられている（これを 束縛 という）という意味だ。y = x と書くと、リストがコピーされるのではなく、y という名前が同じオブジェクトに束縛される。そのため x と y は同じリストを参照することになる。
+
+一方、zはx.copy()はxのリストをコピーした新しいリストオブジェクトを参照する。これを確認してみよう。
+
+#+begin_src python
+>>> x is y
+True
+>>> x is z
+False
+#+end_src
+
+xとzは異なるリストを参照しているが、それらの要素はどうなっているだろうか？
+
+#+begin_src python
+>>> x[0] is z[0]
+True
+>>> x[1] is z[1]
+True
+#+end_src
+
+リストxの1番目の要素とリストzの1番目の要素は同じオブジェクトを参照している。2番目の要素も同様だ。要素は、y = xが同じオブジェクトを参照するように、束縛が単にコピーされるだけなのだ。
+
+x.copy()は、xが参照しているオブジェクトのコピーを作成する。ここでのコピーは、元のオブジェクトとは独立した同じ内容のオブジェクトという意味だ。しかし、オブジェクト要素まで独立したオブジェクトとしてコピーしないので、浅いコピーと呼ばれる。一方、要素も独立したオブジェクトとしてコピーするのは深いコピーと呼ばれる。
+
+浅いコピーは、このような特徴があるため要素がミュータブルで、その要素自体を変更する場合に問題となる。
+
+上記の例の場合、x[1]を通して要素を変更すると、その変更はz[1]からも観測できる。
+
+#+begin_src python
+>>> x[1]
+[8, 9]
+>>> x[1][0] = "a"
+>>> x[1]
+['a', 9]
+>>> z[1]
+['a', 9]
+#+end_src
+
+このような事態を回避するには次に説明する深いコピーをする必要がある。
+
+** 深いコピー — deepcopy()
+*浅いコピー*は、要素は単純なコピーなので、要素は共有されたままになる。要素も完全に独立させたいときは深いコピーを行う。それには=copy= モジュールの =deepcopy()= を使う。
+
+#+begin_src python
+>>> import copy
+>>> a = [1, 2, [8, 9]]
+>>> b = a.copy()
+>>> c = copy.deepcopy(a)
+>>> a[2][1] = 10
+>>> b          # 内側のリストが共有されている
+[1, 2, [8, 10]]
+>>> c          # 影響を受けない
+[1, 2, [8, 9]]
+#+end_src
+
+深いコピーは、要素も新しいオブジェクトになるので、コピー元の変更の影響を受けることはない。反対にコピー先の変更も、コピー元に影響を与えることはない。要素がさらに深くネストしていても、深いコピーは再起的に独立したコピーを作成する。
+
+* 8. リストとループ
+** forで要素を順に処理する
+
+繰り返しリストの要素を順番に処理するときにはfor文を使うのが一般的だ。
+
+#+begin_src python
+cheeses = ['brie', 'gjetost', 'havarti']
+for cheese in cheeses:
+    print(cheese)
+#+end_src
+
+#+begin_example
+brie
+gjetost
+havarti
+#+end_example
+
+** zip()で複数のリストを並行処理
+
+組み込みのzip()関数を使うと、複数のシーケンスを並行して処理できる。=zip()= は、いちばん短いシーケンスがなくなった時点で止める。
+
+#+begin_src python
+days = ['Monday', 'Tuesday', 'Wednesday']
+fruits = ['banana', 'orange', 'peach']
+for day, fruit in zip(days, fruits):
+    print(day, fruit)
+#+end_src
+
+#+begin_example
+Monday banana
+Tuesday orange
+Wednesday peach
+#+end_example
+
+* リスト内包表記
+=for= と =append()= で作っていたリストを、1行で書けるのが *リスト内包表記* です。
+
+#+begin_src python
+# 通常の書き方
+number_list = []
+for number in range(1, 6):
+    number_list.append(number)
+
+# リスト内包表記
+number_list = [number for number in range(1, 6)]
+#+end_src
+
+基本形は =[式 for 変数 in イテラブル]= です。=if= を付けると条件で絞り込めます。
+
+#+begin_src python
+>>> [n for n in range(1, 6) if n % 2 == 1]   # 奇数だけ
+[1, 3, 5]
+>>> [n ** 2 for n in range(1, 6)]            # 2乗
+[1, 4, 9, 16, 25]
+#+end_src
+
+=for= を2つ重ねることもできます。
+
+#+begin_src python
+>>> [(row, col) for row in range(1, 3) for col in range(1, 3)]
+[(1, 1), (1, 2), (2, 1), (2, 2)]
+#+end_src
+
+#+begin_quote
+*注意*：角括弧を丸括弧に変えて =(n for n in range(5))= と書いても、タプル内包表記にはなりません。これは *ジェネレータ式* という別のものです。タプルが欲しいときは =tuple(n for n in range(5))= と書きます。
+
+#+end_quote
+
+--------------
+
+--------------
+
+* 2. タプル：変更できないシーケンス
+** カンマと()で作る
+タプルは、要素をカンマで区切って作ります。括弧で囲むのが一般的です。
+
+#+begin_src python
+>>> empty_tuple = ()
+>>> empty_tuple
+()
+>>> marx_tuple = ('Groucho', 'Chico', 'Harpo')
+>>> marx_tuple
+('Groucho', 'Chico', 'Harpo')
+#+end_src
+
+実は、タプルを作っているのは括弧ではなく *カンマ* です。括弧を省略しても作れます。
+
+#+begin_src python
+>>> marx_tuple = 'Groucho', 'Chico', 'Harpo'
+>>> marx_tuple
+('Groucho', 'Chico', 'Harpo')
+#+end_src
+
+** 要素が1つのタプルに注意
+ここが初心者がつまずきやすいポイントです。*要素が1つのタプルは、末尾にカンマが必要* です。
+
+#+begin_src python
+>>> one_marx = ('Groucho',)
+>>> type(one_marx)
+<class 'tuple'>
+
+>>> not_tuple = ('Groucho')   # カンマがない
+>>> type(not_tuple)
+<class 'str'>
+#+end_src
+
+カンマがないと、括弧は単なる「式のまとまり」とみなされ、ただの文字列になってしまいます。
+
+** tuple()で変換する
+=tuple()= 関数を使うと、リストなどほかのイテラブルからタプルを作れます。
+
+#+begin_src python
+>>> marx_list = ['Groucho', 'Chico', 'Harpo']
+>>> tuple(marx_list)
+('Groucho', 'Chico', 'Harpo')
+#+end_src
+
+** タプルのアンパック
+タプルの要素を、一度に複数の変数へ代入できます。これを *アンパック* といいます。
+
+#+begin_src python
+>>> point = (3, 5)
+>>> x, y = point
+>>> x
+3
+>>> y
+5
+#+end_src
+
+アンパックを使うと、一時変数なしで2つの変数の値を入れ替えられます。
+
+#+begin_src python
+>>> a = 'swordfish'
+>>> b = 'tuttifrutti'
+>>> a, b = b, a
+>>> a
+'tuttifrutti'
+>>> b
+'swordfish'
+#+end_src
+
+** 連結・繰り返し・比較
+#+begin_src python
+>>> ('Groucho',) + ('Chico', 'Harpo')   # 連結
+('Groucho', 'Chico', 'Harpo')
+>>> ('yada',) * 3                       # 繰り返し
+('yada', 'yada', 'yada')
+>>> (7, 2) < (7, 2, 9)                  # 先頭から順に比較
+True
+#+end_src
+
+** タプルは書き換えられない
+タプルの要素に代入しようとするとエラーになります。
+
+#+begin_src python
+>>> t = (1, 2, 3)
+>>> t[0] = 100
+Traceback (most recent call last):
+  ...
+TypeError: 'tuple' object does not support item assignment
+#+end_src
+
+~+=~ を使うと書き換えられたように見えますが、実際には *新しいタプルが作られ、変数がそちらを指すようになっただけ* です。=id()= で確認するとわかります。
+
+#+begin_src python
+>>> t1 = ('Fee', 'Fie', 'Foe')
+>>> id(t1)
+4365405712
+>>> t1 += ('Flop',)
+>>> t1
+('Fee', 'Fie', 'Foe', 'Flop')
+>>> id(t1)          # 別のオブジェクトになっている
+4364770744
+#+end_src
+
+※ =id()= の値は環境によって異なります。
+
+--------------
+
+* 10. リストとタプルの使い分け
+「変更できないなら、タプルは不便なだけでは？」と思うかもしれません。『入門Python3』では、タプルを使う理由として次の点が挙げられています。
+
+- *消費するメモリが少ない*
+- *誤って要素を書き換える心配がない*
+- *辞書のキーとして使える*（リストは使えません）
+- 名前付きタプル（=namedtuple=）は、簡単なオブジェクトの代わりとして使える
+
+#+begin_src python
+>>> locations = {(35.68, 139.76): 'Tokyo', (34.69, 135.50): 'Osaka'}
+>>> locations[(35.68, 139.76)]
+'Tokyo'
+#+end_src
+
+使い分けの目安は次のとおりです。
+
+| 使う場面                                           | おすすめ |
+|----------------------------------------------------+----------|
+| 要素を追加・削除・並べ替えする                     | リスト   |
+| 同じ種類のデータを並べる（点数一覧、名前一覧など） | リスト   |
+| 変わらない値の組（座標、RGB値、年月日など）        | タプル   |
+| 辞書のキーにしたい                                 | タプル   |
+| 関数から複数の値を返す                             | タプル   |
+
+日常的なプログラミングでは、リストを使う場面のほうが多いでしょう。「この値の組は変わらない」とはっきりしているときにタプルを選ぶ、と考えるとわかりやすいです。
+
+--------------
+
+* まとめ
+- *リスト* =[]= は変更できる（ミュータブル）、*タプル* =()= は変更できない（イミュータブル）
+- 要素が1つのタプルは *末尾のカンマが必須*：=('Groucho',)=
+- タプルのアンパックで、複数の変数への代入や値の交換ができる
+- リストは =append()=・=insert()=・=extend()= で追加、=del=・=remove()=・=pop()= で削除
+- =sort()= は元のリストを並べ替え、=sorted()= は新しいリストを返す
+- ~=~ はコピーではない。独立させたいときは =copy()=、入れ子なら =deepcopy()=
+- リスト内包表記 =[式 for 変数 in イテラブル if 条件]= でリストを簡潔に作れる
+- 変わる可能性のあるデータはリスト、変わらない値の組はタプル
+
+リストとタプルは、これから先のどんなプログラムにも登場する基本のデータ構造です。サンプルコードを対話モードで実際に動かして、動きを確かめてみてください。次回は、キーと値でデータを管理する *辞書と集合* を取り上げる予定です。
+
+--------------
+
+** 参考資料
+- 『入門Python3 第2版』Bill Lubanovic 著、鈴木駿 監訳、長尾高弘 訳（オライリー・ジャパン） 7章「タプルとリスト」
+- [[https://docs.python.org/ja/3/tutorial/datastructures.html][Python 公式ドキュメント：5. データ構造]]
+- [[https://docs.python.org/ja/3/library/stdtypes.html#sequence-types-list-tuple-range][Python 公式ドキュメント：組み込み型 シーケンス型 --- list, tuple, range]]
+- [[https://docs.python.org/ja/3/library/copy.html][Python 公式ドキュメント：copy --- 浅いコピーおよび深いコピー操作]]
+
+** join()でリストを文字列にする
+#+begin_src python
+>>> ', '.join(['Harry', 'Ron', 'Hermione'])
+'Harry, Ron, Hermione'
+#+end_src
+
+=join()= は文字列のメソッドなので、「区切り文字.join(リスト)」の順で書きます。
+
+
+index() と count() は、どちらもタプルや文字列でも使える。
+
+#+begin_src python
+>>> ('a', 'b').index('b')
+1
+>>> 'banana'.index('an')      # 文字列は部分文字列を探す
+1
+#+end_src
+
+
+タプルや文字列でも使える
+
+#+begin_src python
+>>> ('a', 'b', 'a').count('a')
+2
+>>> 'banana'.count('an')      # 文字列は部分文字列を数える
+2
+#+end_src
+
+文字列の count() には、リストと違って範囲を指定する引数がある。
+
+#+begin_src python
+>>> 'banana'.count('a', 2)    # インデックス2以降を数える
+2
+#+end_src
