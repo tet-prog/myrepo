@@ -1,0 +1,226 @@
+#+title: 【Python入門】条件分岐（if文）の使い方を徹底解説
+#+options: ^:nil toc:nil num:nil
+#+startup: showall
+
+プログラムを書いていると、「ある条件を満たしたときだけ処理をしたい」という場面が必ず出てくる。たとえば「点数が80点以上なら"合格"と表示する」「在庫が0なら"売り切れ"と表示する」といった処理だ。
+
+このように、条件によって実行する処理を切り替えることを*条件分岐*と呼ぶ。今回はPythonで条件分岐を書くための基本である=if=文について、比較演算子や論理演算子、真偽値の判定方法まで含めて解説する。
+
+* if文の基本構文
+ifの構文は次のとおりです。
+
+if 条件式1:
+    処理1
+elif 条件式2:
+    処理2
+elif 条件式3:
+    処理3
+...
+
+else:
+    処理n
+
+ポイントは次はとおりです。
+
+- if、elif、elseの末尾はコロン（:）で終わる
+- elifは省略可能である。また、必要であれば幾つでも記載して良い。
+- elseは省略可能である。
+- 処理Xには複数の文を書くことができるが、インデントする必要がある。
+
+** ifのみを使用する
+
+まずはifだけの簡単な例から見てみよう。
+
+ifの行には、ifに続けて条件式を記載し、末尾に*コロン（:）を記載する。書き忘れると=SyntaxError=になる。ifの行の下には条件が成立した時の処理（スイート呼ばれる）を記載する。スイートはインデント（字下げ）して記載する必要がある。インデントのサイズは自由に決めて良いが、インデントの深さでスイートの範囲を判断するので、これは首尾一貫している必要がある。つまり、スイートの文はすべて同じ深さ（サイズ）である必要がある。推奨は半角スペース4つである（PEP 8で推奨されているサイズ）。
+
+#+begin_src python
+import random
+
+score = random.randint(0, 100)
+
+if score >= 60:
+    print("合格です。")
+    print(f"点数は{score}点でした。")
+#+end_src
+
+この例ではscoreが60以上の場合（条件が成立した）、2つの文を表示する。その後、ifの次の文へ制御が移るが、この例ではプログラムの末尾なのでプログラムは終了する。60未満の場合（条件が不成立）はifのスイートは実行されず、ifの次の文へ制御が移りプログラムが終了する。
+
+* else：条件が成り立たなかったときの処理
+
+条件が成り立たなかった場合の処理を実行したい場合は、elseを追加して処理を記述する。
+
+#+begin_src python
+import random
+
+score = random.randint(0, 100)
+
+if score >=60:
+    print("合格です")
+else:
+    print("不合格です")
+
+print(f"点数は{score}点でした。")
+#+end_src
+
+scoreが60以上ならifのスイートが実行され、ifの条件式が不成立（scoreが60以上でない）なら、elseのスイートが実行される。
+
+* elif：複数の条件で分岐させる
+
+複数の条件で分岐させるには、=if=の後に=elif=（else ifの略）を必要な数だけ追加する。いずれの条件も成立しなかった場合の処理を実行したい場合は、前述した=else=を追加する。
+
+#+begin_src python
+import random
+
+score = random.randint(0, 100)
+
+if score >= 90:
+    print("評価: A")
+elif score >= 70:
+    print("評価: B")
+elif score >= 50:
+    print("評価: C")
+else:
+    print("評価: D")
+#+end_src
+
+if、elifの条件式が上から順に評価され、最初に条件が成立（True）したスイートだけが実行される。該当するif、elifのスイートがすべて実行されたら、if全体の次の行に処理が移る。if、elifのすべての条件式がFalseだった場合、elseがあれば、そのスイートが実行される。
+
+* 比較演算子
+条件式でよく使う比較演算子は次の6種類である。これらは必ず=True=か=False=のいずれかを返す。
+
+| 演算子  | 意味       |
+|---------+------------|
+| ~　　=~ | 等しい     |
+| ~!=~ | 等しくない |
+| =<=     | より小さい |
+| ~<=~ | 以下       |
+| =>=     | より大きい |
+| ~>=~ | 以上       |
+
+注意したいのは、値を比較する~==~と、変数に値を代入する~=~は別物だということだ。うっかり~if score = 80:~のように書くと=SyntaxError=になる。
+
+#+begin_src python
+x = 7
+print(x == 5)   # False
+print(x == 7)   # True
+print(x < 10)   # True
+#+end_src
+
+* 論理演算子（and / or / not）で条件を組み合わせる
+複数の条件をまとめて判定したいときは、=and=・=or=・=not=を使う。
+
+#+begin_src python
+age = 25
+has_ticket = True
+
+if age >= 18 and has_ticket:
+    print("入場できます")
+#+end_src
+
+- =and=：両方の条件がTrueのときだけTrue
+- =or=：どちらか一方でもTrueならTrue
+- =not=：真偽値を反転させる
+
+論理演算子は比較演算子よりも優先順位が低いため、~age >= 18 and has_ticket~はまず~age >= 18~が計算されてから=and=が評価される。優先順位を明示したい場合は、次のように括弧を使うと読みやすくなる。
+
+#+begin_src python
+if (age >= 18) and (has_ticket):
+    print("入場できます")
+#+end_src
+
+なお、1つの変数を範囲で判定したいだけなら、Pythonでは次のように書くこともできる。
+
+#+begin_src python
+x = 7
+print(5 < x < 10)  # True（5 < x and x < 10 と同じ意味）
+#+end_src
+
+* 「真」と「偽」はブール値だけではない
+=if=の条件には、=True=/=False=以外の値を書くこともできる。Pythonでは、明示的にブール値でなくても「偽」とみなされる値が決まっている。
+
+公式ドキュメント（[[https://docs.python.org/ja/3/library/stdtypes.html#truth-value-testing][Truth Value Testing]]）によると、次の値はすべて=False=として扱われる。
+
+- =None=
+- =False=
+- 数値のゼロ：=0=、=0.0=、=0j= など
+- 空のシーケンスやコレクション：=''=（空文字列）、=[]=（空リスト）、=()=（空タプル）、={}=（空辞書）、=set()=（空集合）
+
+それ以外の値はすべて=True=とみなされる。これを利用すると、リストが空かどうかを次のようにシンプルに書ける。
+
+#+begin_src python
+items = []
+
+if items:
+    print("在庫があります")
+else:
+    print("在庫がありません")
+#+end_src
+
+~len(items) == 0~と書かなくても、空リストは自動的にFalse扱いになるため、このような書き方がPythonでは好まれる。
+
+* in演算子で「いずれかに一致するか」をスッキリ書く
+「複数の値のどれかと一致するか」を調べたいとき、=or=を並べて書くと長くなりがちだ。
+
+#+begin_src python
+fruit = "apple"
+
+if fruit == "apple" or fruit == "banana" or fruit == "orange":
+    print("好きな果物です")
+#+end_src
+
+これは=in=演算子を使うとすっきり書ける。
+
+#+begin_src python
+fruit = "apple"
+favorites = ["apple", "banana", "orange"]
+
+if fruit in favorites:
+    print("好きな果物です")
+#+end_src
+
+=in=はリストだけでなく、文字列・タプル・集合・辞書（キーの一致を調べる）にも使える。
+
+* セイウチ演算子（:=）で代入とテストを同時に行う（Python 3.8以降）
+Python 3.8からは、~:=~という*代入式（セイウチ演算子）*が追加された。条件式の中で値を代入しつつ、その値をそのままテストできる。
+
+#+begin_src python
+text = "Hello, Python!"
+
+if (length := len(text)) > 10:
+    print(f"{length}文字あります")
+#+end_src
+
+~:=~を使わない場合は、変数への代入と条件判定を2行に分けて書く必要があるが、セイウチ演算子を使うと1行にまとめられる。
+
+* おまけ：match文による構造的パターンマッチング（Python 3.10以降）
+Python 3.10からは=match=文が追加され、値のパターンに応じて分岐を書けるようになった。特に多数の=elif=が並ぶような場合に見通しがよくなる。
+
+#+begin_src python
+def http_status_message(status):
+    match status:
+        case 400:
+            return "Bad Request"
+        case 404:
+            return "Not Found"
+        case 401 | 403:
+            return "Not Allowed"
+        case _:
+            return "Unknown Status"
+#+end_src
+
+=case _:=はどのパターンにも一致しなかった場合の受け皿で、=if=文でいう=else=にあたる。=match=文はタプルの分解や、クラスのフィールドを使った分岐にも対応した強力な機能である。詳しくは公式ドキュメントの[[https://docs.python.org/ja/3/tutorial/controlflow.html][制御構造ツール]]を参照されたい。
+
+* まとめ
+- =if=文の条件式の末尾には=:=が必要で、実行するブロックはインデントで表す
+- 複数条件への分岐は=elif=、それ以外の場合は=else=
+- 比較には~==~・~!=~・=<=・~<=~・=>=・~>=~を使う
+- =and=・=or=・=not=で条件を組み合わせられる
+- =None=・=0=・空のリストや文字列などは=False=として扱われる
+- =in=演算子で「いずれかに一致するか」をスッキリ書ける
+- Python 3.8以降ではセイウチ演算子（~:=~）、3.10以降では=match=文も使える
+
+条件分岐はプログラムの基本中の基本である。まずは=if=・=elif=・=else=を使いこなせるようになれば、実用的なスクリプトのほとんどはカバーできる。
+
+--------------
+
+*参考文献* - Bill Lubanovic 著、鈴木駿 監訳『入門Python3 第2版』O'Reilly Japan、4章「ifによる選択」 - Python公式ドキュメント（日本語版・安定版） - [[https://docs.python.org/ja/3/tutorial/controlflow.html][制御フローツール --- if文・match文]] - [[https://docs.python.org/ja/3/library/stdtypes.html#truth-value-testing][組み込み型 --- 真理値判定]]
