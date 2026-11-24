@@ -1,0 +1,341 @@
+#+title: 【Python入門】for文とwhile文によるループ処理の基本をやさしく解説
+#+options: ^:nil toc:nil num:nil
+#+startup: showall
+
+プログラムでは「同じ処理を何度も繰り返したい」という場面がよくあります。たとえば、リストの要素を1つずつ表示したり、ユーザーが「終了」と入力するまで入力を受け付けたり……。そんなときに使うのが *ループ（繰り返し処理）* です。
+
+Pythonのループには *=while=文* と *=for=文* の2種類があります。この記事では、それぞれの基本的な書き方から、=break=・=continue=・=else=節、=range()=関数、実践で役立つテクニックまでをまとめて解説します。
+
+#+begin_quote
+本記事は書籍『入門Python3 第2版』6章「whileとforによるループ」を参考にしつつ、Python公式ドキュメント（Python 3.14）の内容に沿って解説しています。
+
+#+end_quote
+
+--------------
+
+* この記事でわかること
+- =while=文の書き方と無限ループ
+- =for=文の書き方とイテラブル
+- =break=／=continue=でループを制御する方法
+- ループの=else=節の意味（breakチェッカー）
+- =range()=で数値の並びを作る方法
+- =enumerate()=・=zip()=など便利な書き方
+- ループでよくあるミスと注意点
+
+--------------
+
+* 1. while文：条件が真の間くり返す
+
+** 基本の書き方
+=while=は、*条件式が真（True）である間*、ブロックの処理を繰り返します。
+
+#+begin_src python
+while 条件式:
+    繰り返したい処理
+#+end_src
+
+
+while 文では、まず条件式が評価される。Trueと評価されれば、while に続くブロック（公式ドキュメントでは「スイート」と呼ぶ）が実行される。ブロックが最後まで実行されると制御は while の行に戻り、条件式が再び評価される。真であればブロックが再度実行され、これが条件式がFalseになるまで繰り返される。偽になった時点でループは終了し、制御はループの次の文（インデントが元に戻った位置）へ移る。最初の評価の時点で偽だった場合、ブロックは一度も実行されない。
+
+whileに続くコードブロックはifと同様にインデント（字下げ）する必要があります。インデントは半角スペース4つが推奨である。
+
+1から5までの数値を表示する例を見てみましょう。
+
+#+begin_src python
+count = 1
+while count <= 5:
+    print(count)
+    count += 1
+#+end_src
+
+実行結果：
+
+#+begin_example
+1
+2
+3
+4
+5
+#+end_example
+
+処理の流れは次のとおりです。
+
+1. =count= に 1 を代入
+2. ~count <= 5~ を判定。真ならブロックを実行
+3. =count= を表示して、~count += 1~ で1増やす
+4. ループの先頭に戻って再び判定
+5. =count= が 6 になると ~count <= 5~ が偽（False）になり、ループを抜ける
+
+* 2. breakでループを途中で抜ける
+
+breakはループを途中で抜けるために使われます。例えば「何かが起こるまでループを続けたいが、それがいつ起こるかわからない」というときです。breakを実行するとループを抜け、制御はループの次の文へ移る。
+
+次のコードは、入力された文字列の先頭を大文字にして表示し、=q= が入力されたら終了します。
+
+#+begin_src python
+while True:
+    stuff = input("文字列を入力してください [q で終了]: ")
+    if stuff == "q":
+        break
+    print(stuff.capitalize())
+#+end_src
+
+実行例：
+
+#+begin_example
+文字列を入力してください [q で終了]: test
+Test
+文字列を入力してください [q で終了]: hey, it works
+Hey, it works
+文字列を入力してください [q で終了]: q
+#+end_example
+
+=break= は、*それを囲んでいる最も内側のループ*から抜け出します。
+
+* 3. continueで次の繰り返しへ進む
+ループを抜けるのではなく、*残りの処理をスキップして次の繰り返しに進みたい*ときは *=continue=* を使います。
+
+次の例は、整数を入力してもらい、奇数なら2乗を表示し、偶数なら何もしません。
+
+#+begin_src python
+while True:
+    value = input("整数を入力してください [q で終了]: ")
+    if value == "q":   # 終了
+        break
+    number = int(value)
+    if number % 2 == 0:   # 偶数ならスキップ
+        continue
+    print(number, "の2乗は", number * number)
+#+end_src
+
+実行例：
+
+#+begin_example
+整数を入力してください [q で終了]: 1
+1 の2乗は 1
+整数を入力してください [q で終了]: 2
+整数を入力してください [q で終了]: 3
+3 の2乗は 9
+整数を入力してください [q で終了]: q
+#+end_example
+
+* 4. ループのelse節：breakしなかったときに実行
+
+Pythonのループには、ほかの言語ではあまり見かけない *=else=節* を付けられます。
+
+ループの=else=節は、*=break=されずにループが最後まで終了したときだけ*実行されます。=break=で抜けた場合は実行されません。
+
+#+begin_src python
+numbers = [1, 3, 5]
+position = 0
+while position < len(numbers):
+    number = numbers[position]
+    if number % 2 == 0:
+        print("偶数が見つかりました:", number)
+        break
+    position += 1
+else:   # breakしなかった
+    print("偶数は見つかりませんでした")
+#+end_src
+
+実行結果：
+
+#+begin_example
+偶数は見つかりませんでした
+#+end_example
+
+* 5. for文：要素を1つずつ取り出して処理する
+
+** 基本の書き方
+
+=for=文は、リストや文字列などの *イテラブル（反復可能なオブジェクト）* から、要素を1つずつ取り出して処理します
+
+#+begin_src python
+for 変数 in イテラブル:
+    繰り返したい処理
+#+end_src
+
+forはリストや辞書などの要素を1つずつ処理するためによく使われる。
+
+#+begin_src python
+languages = ["Python", "Ruby", "Go"]
+for language in languages:
+    print(language)
+#+end_src
+
+#+begin_example
+Python
+Ruby
+Go
+#+end_example
+
+** forでもbreak・continue・elseが使える
+
+=while=と同様に、=for=でも =break=、=continue=、=else=節が使える。
+
+#+begin_src python
+statuses = ["ready", "ready", "ready"]
+for status in statuses:
+    if status == "error":
+        print("エラーを検出した")
+        break
+    print(status)
+else:
+    print("エラーはなかった")
+#+end_src
+
+#+begin_example
+ready
+ready
+ready
+エラーはなかった
+#+end_example
+
+=break= が実行されなかったので、=else= 節まで到達している。リストに "error" が含まれていると、そこで =break= するため =else= 節は実行されない。
+
+#+begin_src python
+statuses = ["ready", "error", "ready"]
+for status in statuses:
+    if status == "error":
+        print("エラーを検出した")
+        break
+    print(status)
+else:
+    print("エラーはなかった")
+#+end_src
+
+#+begin_example
+ready
+エラーを検出した
+#+end_example
+
+公式ドキュメントのチュートリアルには、=for= と =else= を組み合わせて素数を見つける例が載っている。
+
+#+begin_src python
+for n in range(2, 10):
+    for x in range(2, n):
+        if n % x == 0:
+            print(n, "は", x, "*", n // x, "と等しい")
+            break
+    else:
+        # 割り切れる数が見つからなければ素数
+        print(n, "は素数です")
+#+end_src
+
+#+begin_example
+2 は素数です
+3 は素数です
+4 は 2 * 2 と等しい
+5 は素数です
+6 は 2 * 3 と等しい
+7 は素数です
+8 は 2 * 4 と等しい
+9 は 3 * 3 と等しい
+#+end_example
+
+=else= が内側の =for= に対応している（インデントの位置に注目）ことに注意したい。
+
+* 6. range()で数値の並びを作る
+
+「10回繰り返したい」「0から100まで2つおきに処理したい」というときは *=range()=* 関数と組み合わせます。
+
+書式は =range(start, stop, step)= です。
+
+| 引数    | 意味                         | 省略時   |
+|---------+------------------------------+----------|
+| =start= | 開始値                       | 0        |
+| =stop=  | 終了値（*この値は含まない*） | 省略不可 |
+| =step=  | 増分                         | 1        |
+
+#+begin_src python
+for x in range(3):
+    print(x)
+#+end_src
+
+#+begin_example
+0
+1
+2
+#+end_example
+
+いくつかのパターンを =list()= で確認してみましょう。
+
+#+begin_src python
+>>> list(range(5))
+[0, 1, 2, 3, 4]
+>>> list(range(5, 10))
+[5, 6, 7, 8, 9]
+>>> list(range(0, 11, 2))    # 0〜10の偶数
+[0, 2, 4, 6, 8, 10]
+>>> list(range(2, -1, -1))   # 逆順
+[2, 1, 0]
+#+end_src
+
+#+begin_quote
+
+*ポイント*：=range()= はリストを作るわけではありません。=range(10)= をそのまま表示すると =range(0, 10)= と表示されます。必要なときに値を1つずつ返すオブジェクトなので、=range(1000000)= のような大きな範囲でもメモリを大量に消費しません。リストが欲しいときには =list()= で変換します。
+
+#+end_quote
+
+* 7. 覚えておくと便利なループのテクニック
+** enumerate()：番号と要素を同時に取り出す
+「何番目か」も知りたいときに、=range(len(...))= を使うより =enumerate()= を使うほうがPythonらしい書き方です。
+
+#+begin_src python
+fruits = ["apple", "banana", "cherry"]
+for i, fruit in enumerate(fruits, start=1):
+    print(i, fruit)
+#+end_src
+
+#+begin_example
+1 apple
+2 banana
+3 cherry
+#+end_example
+
+** zip()：複数のリストを並行してループする
+#+begin_src python
+names = ["Taro", "Hanako"]
+scores = [80, 95]
+for name, score in zip(names, scores):
+    print(name, score)
+#+end_src
+
+#+begin_example
+Taro 80
+Hanako 95
+#+end_example
+
+* 8. よくあるミスと注意点
+** ③ ループ中にリストや辞書を変更しない
+反復処理中に同じコレクションへ要素の追加・削除を行うと、思わぬ結果になります。公式ドキュメントでは、*コピーに対してループする* か *新しいコレクションを作る* 方法が紹介されています。
+
+#+begin_src python
+users = {"taro": "active", "jiro": "inactive", "hanako": "active"}
+
+# 方法1：コピーをループして元の辞書から削除
+for user, status in users.copy().items():
+    if status == "inactive":
+        del users[user]
+
+# 方法2：新しい辞書を作る
+active_users = {}
+for user, status in users.items():
+    if status == "active":
+        active_users[user] = status
+#+end_src
+
+* まとめ
+- *=while=* は条件が真の間くり返す。回数が決まっていない処理に向いている
+- *=for=* はイテラブルから要素を1つずつ取り出して処理する。Pythonではこちらが基本
+- *=break=* でループを抜け、*=continue=* で次の繰り返しへ進む
+- ループの *=else=節* は、=break=されずに最後まで回ったときだけ実行される（breakチェッカー）
+- *=range(start, stop, step)=* で数値の並びを作れる。=stop= は含まれない
+- =enumerate()=、=zip()=、リスト内包表記を使うとよりPythonらしく書ける
+
+ループはどんなプログラムにも登場する重要な構文です。サンプルコードを実際に動かして、動きを確かめてみてください。次回はリストやタプルなど、ループと相性のよいデータ構造を取り上げる予定です。
+
+** 参考資料
+- 『入門Python3 第2版』Bill Lubanovic 著、鈴木駿 監訳、長尾高弘 訳（オライリー・ジャパン） 6章「whileとforによるループ」
+- [[https://docs.python.org/ja/3/tutorial/controlflow.html][Python 公式ドキュメント：4. その他の制御フローツール]]
+- [[https://docs.python.org/ja/3/library/stdtypes.html#range][Python 公式ドキュメント：組み込み関数 range]]
